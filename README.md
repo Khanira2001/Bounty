@@ -69,3 +69,124 @@ async function approveToken(tokenAddress, tokenABI, amount, wallet) {
   const receipt = await transactionResponse.wait();
 }
 
+
+
+**Purpose**: This function approves the Uniswap Swap Router to spend a specified amount of USDC on behalf of the user. This is necessary before the swap can be executed.
+
+**Key Operations**:
+- Initializes the token contract using its address, ABI, and the user's wallet.
+- Converts the amount to the appropriate units.
+- Sends the approval transaction to the blockchain and waits for confirmation.
+
+### 3. `getPoolInfo` Function
+
+```javascript
+async function getPoolInfo(factoryContract, tokenIn, tokenOut) {
+  const poolAddress = await factoryContract.getPool(
+    tokenIn.address,
+    tokenOut.address,
+    3000
+  );
+  const poolContract = new ethers.Contract(poolAddress, POOL_ABI, provider);
+  const [token0, token1, fee] = await Promise.all([
+    poolContract.token0(),
+    poolContract.token1(),
+    poolContract.fee(),
+  ]);
+  return { poolContract, token0, token1, fee };
+}
+```
+
+**Purpose**: This function retrieves the liquidity pool information necessary for the swap.
+
+**Key Operations**:
+- Fetches the pool address for the USDC-LINK pair from the Uniswap Factory.
+- Initializes the pool contract with the retrieved address and ABI.
+- Retrieves the token addresses and fee tier associated with the pool.
+
+### 4. `prepareSwapParams` Function
+
+```javascript
+async function prepareSwapParams(poolContract, signer, amountIn) {
+  return {
+    tokenIn: USDC.address,
+    tokenOut: LINK.address,
+    fee: await poolContract.fee(),
+    recipient: signer.address,
+    amountIn: amountIn,
+    amountOutMinimum: 0,
+    sqrtPriceLimitX96: 0,
+  };
+}
+```
+
+**Purpose**: This function prepares the necessary parameters required for executing the token swap on Uniswap.
+
+**Key Operations**:
+- Gathers the token addresses, fee tier, and recipient address.
+- Sets the amount of USDC to be swapped and other relevant parameters.
+- Returns an object containing all the parameters needed for the swap.
+
+### 5. `executeSwap` Function
+
+```javascript
+async function executeSwap(swapRouter, params, signer) {
+  const transaction = await swapRouter.exactInputSingle.populateTransaction(params);
+  const receipt = await signer.sendTransaction(transaction);
+}
+```
+
+**Purpose**: This function executes the token swap on Uniswap.
+
+**Key Operations**:
+- Populates the swap transaction using the parameters prepared earlier.
+- Sends the transaction to the blockchain and waits for it to be mined.
+- Logs the transaction receipt for tracking and verification.
+
+### 6. `depositToAave` Function
+
+```javascript
+async function depositToAave(aaveLendingPool, tokenAddress, amount, wallet) {
+  const approveTx = await approveToken(tokenAddress, TOKEN_ABI, amount, wallet);
+  const depositTx = await aaveLendingPool.deposit(tokenAddress, amount, wallet.address, 0);
+  await depositTx.wait();
+}
+```
+
+**Purpose**: This function deposits the swapped LINK tokens into Aave to start earning interest.
+
+**Key Operations**:
+- Approves Aave to spend the LINK tokens.
+- Sends the deposit transaction to Aave's lending pool contract.
+- Waits for the deposit transaction to be confirmed on the blockchain.
+
+### 7. `main` Function
+
+```javascript
+async function main(swapAmount) {
+  const amountIn = ethers.parseUnits(swapAmount.toString(), USDC.decimals);
+
+  try {
+    await approveToken(USDC.address, TOKEN_IN_ABI, swapAmount, signer);
+    const { poolContract } = await getPoolInfo(factoryContract, USDC, LINK);
+    const params = await prepareSwapParams(poolContract, signer, amountIn);
+    const swapRouter = new ethers.Contract(SWAP_ROUTER_CONTRACT_ADDRESS, SWAP_ROUTER_ABI, signer);
+    await executeSwap(swapRouter, params, signer);
+    await depositToAave(aaveLendingPool, LINK.address, amountIn, signer);
+  } catch (error) {
+    console.error("An error occurred:", error.message);
+  }
+}
+```
+
+**Purpose**: The main function orchestrates the entire process, from approving the tokens to executing the swap and finally depositing the swapped tokens into Aave.
+
+**Key Operations**:
+- Converts the swap amount to the correct units.
+- Calls the `approveToken`, `getPoolInfo`, `prepareSwapParams`, `executeSwap`, and `depositToAave` functions in sequence to complete the entire workflow.
+
+## Summary
+
+This code is designed to showcase the composability and integration potential within the DeFi ecosystem. By performing a token swap on Uniswap and then utilizing the swapped tokens within Aave, the script demonstrates how different protocols can be combined to create more complex and valuable financial operations.
+```
+
