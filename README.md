@@ -14,7 +14,7 @@ This DeFi script builds upon a basic token swap on Uniswap and introduces additi
     - The user must approve the Aave lending pool to access their LINK.
     - Once deposited, the LINK begins accruing interest within Aave, adding an extra layer of functionality to the basic swap.
 
-### Workflow
+### Steps
 
 - **Step 1**: The user initiates the process by requesting a token swap from USDC to LINK on Uniswap.
 - **Step 2**: The Uniswap Router requests approval from the user's wallet to spend USDC.
