@@ -185,7 +185,7 @@ async function main(swapAmount) {
 - Converts the swap amount to the correct units.
 - Calls the `approveToken`, `getPoolInfo`, `prepareSwapParams`, `executeSwap`, and `depositToAave` functions in sequence to complete the entire workflow.
 
-## Summary
+## In Conclusion
 
 This code is designed to showcase the composability and integration potential within the DeFi ecosystem. By performing a token swap on Uniswap and then utilizing the swapped tokens within Aave, the script demonstrates how different protocols can be combined to create more complex and valuable financial operations.
 ```
