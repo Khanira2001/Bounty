@@ -38,3 +38,34 @@ The diagram below illustrates the sequence of steps and interactions between the
 - **Aave Protocol**: Handles the accumulation of interest on the deposited LINK.
 
 This diagram captures the complete process and the interaction between multiple DeFi protocols, showcasing the composability and integration potential in the DeFi space.
+
+
+
+# Code Explanation
+
+This document provides a comprehensive explanation of the code, detailing the key functions, logic, and how the interactions with Uniswap and Aave are managed.
+
+## Overview
+
+The script is designed to perform a token swap on Uniswap and then automatically deposit the swapped tokens into Aave for earning interest. Below is a breakdown of the major components and functions within the script:
+
+### 1. Setting Up the Environment
+
+The script begins by setting up the environment, including importing necessary libraries and initializing key variables. The `.env` file is used to store sensitive information such as the RPC URL and the user's private key.
+
+### 2. `approveToken` Function
+
+```javascript
+async function approveToken(tokenAddress, tokenABI, amount, wallet) {
+  const tokenContract = new ethers.Contract(tokenAddress, tokenABI, wallet);
+  const approveAmount = ethers.parseUnits(amount.toString(), USDC.decimals);
+  const approveTransaction = await tokenContract.approve.populateTransaction(
+    SWAP_ROUTER_CONTRACT_ADDRESS,
+    approveAmount
+  );
+  const transactionResponse = await wallet.sendTransaction(
+    approveTransaction
+  );
+  const receipt = await transactionResponse.wait();
+}
+
